@@ -1,16 +1,18 @@
 import { z } from "zod";
 
+const dateTimeString = z
+  .string()
+  .refine((val) => !isNaN(Date.parse(val)), { message: "Invalid datetime" });
+
 export const horizonSchema = z.object({
-  start: z.string().datetime(),
-  end: z.string().datetime(),
+  start: dateTimeString,
+  end: dateTimeString,
 });
 
 export const resourceSchema = z.object({
   id: z.string().min(1),
   capabilities: z.array(z.string().min(1)).min(1),
-  calendar: z
-    .array(z.tuple([z.string().datetime(), z.string().datetime()]))
-    .min(1),
+  calendar: z.array(z.tuple([dateTimeString, dateTimeString])).min(1),
 });
 
 export const operationSchema = z.object({
@@ -21,7 +23,7 @@ export const operationSchema = z.object({
 export const productSchema = z.object({
   id: z.string().min(1),
   family: z.string().min(1),
-  due: z.string().datetime(),
+  due: dateTimeString,
   route: z.array(operationSchema).min(1),
 });
 
@@ -45,8 +47,8 @@ export const assignmentSchema = z.object({
   product: z.string(),
   op: z.string(),
   resource: z.string(),
-  start: z.string().datetime(),
-  end: z.string().datetime(),
+  start: dateTimeString,
+  end: dateTimeString,
 });
 
 export const kpisSchema = z.object({
