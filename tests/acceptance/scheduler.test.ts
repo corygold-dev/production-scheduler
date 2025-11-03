@@ -536,5 +536,92 @@ describe("Scheduler Acceptance Tests", () => {
       expect(result.kpis.changeovers).toBeGreaterThanOrEqual(0);
       expect(typeof result.kpis.changeovers).toBe("number");
     });
+
+    it("counts exact changeovers for deterministic case", () => {
+      const deterministicInput: Input = {
+        horizon: {
+          start: "2025-11-03T08:00:00Z",
+          end: "2025-11-03T16:00:00Z",
+        },
+        resources: [
+          {
+            id: "Machine-1",
+            capabilities: ["work"],
+            calendar: [["2025-11-03T08:00:00Z", "2025-11-03T16:00:00Z"]],
+          },
+        ],
+        changeover_matrix_minutes: {
+          values: {
+            "X->X": 0,
+            "X->Y": 10,
+            "Y->X": 10,
+            "Y->Y": 0,
+          },
+        },
+        products: [
+          {
+            id: "Job-X",
+            family: "X",
+            due: "2025-11-03T09:00:00Z",
+            route: [{ capability: "work", duration_minutes: 30 }],
+          },
+          {
+            id: "Job-Y",
+            family: "Y",
+            due: "2025-11-03T10:00:00Z",
+            route: [{ capability: "work", duration_minutes: 30 }],
+          },
+          {
+            id: "Job-X2",
+            family: "X",
+            due: "2025-11-03T11:00:00Z",
+            route: [{ capability: "work", duration_minutes: 30 }],
+          },
+        ],
+        settings: {
+          time_limit_seconds: 30,
+        },
+      };
+
+      const result = schedule(deterministicInput);
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      expect(result.kpis.changeovers).toBe(2);
+    });
+  });
+
+  describe("Quality Assurance", () => {
+    it("produces deterministic results for identical inputs", () => {
+      const resultA = schedule(sampleInput);
+      const resultB = schedule(sampleInput);
+
+      expect(resultA.success).toBe(resultB.success);
+      if (!resultA.success || !resultB.success) return;
+
+      expect(resultA.assignments).toEqual(resultB.assignments);
+      expect(resultA.kpis).toEqual(resultB.kpis);
+    });
+
+    it("respects time limit setting", () => {
+      const result = schedule({
+        ...sampleInput,
+        settings: {
+          time_limit_seconds: 30,
+        },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("matches snapshot for sample input structure", () => {
+      const result = schedule(sampleInput);
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      expect(result).toMatchSnapshot();
+    });
   });
 });
