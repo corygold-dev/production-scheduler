@@ -1,0 +1,53 @@
+{
+  "horizon": { "start": "2025-11-03T08:00:00", "end": "2025-11-03T16:00:00" },
+  "resources": [
+    {
+      "id": "Machine-1",
+      "capabilities": ["paint"],
+      "calendar": [["2025-11-03T08:00", "2025-11-03T16:00"]]
+    }
+  ],
+  "changeover_matrix_minutes": {
+    "values": {
+      "standard->standard": 5,
+      "standard->premium": 20,
+      "premium->standard": 20,
+      "premium->premium": 5,
+      "standard:red->standard:red": 0,
+      "standard:red->standard:blue": 15,
+      "standard:red->premium:blue": 40,
+      "premium:blue->standard:red": 35
+    }
+  },
+  "products": [
+    {
+      "id": "P-1",
+      "family": "standard",
+      "attributes": { "color": "red" },
+      "due": "2025-11-03T10:00:00",
+      "route": [{ "capability": "paint", "duration_minutes": 30 }]
+    },
+    {
+      "id": "P-2",
+      "family": "standard",
+      "attributes": { "color": "blue" },
+      "due": "2025-11-03T11:00:00",
+      "route": [{ "capability": "paint", "duration_minutes": 30 }]
+    },
+    {
+      "id": "P-3",
+      "family": "premium",
+      "attributes": { "color": "blue" },
+      "due": "2025-11-03T13:00:00",
+      "route": [{ "capability": "paint", "duration_minutes": 40 }]
+    },
+    {
+      "id": "P-4",
+      "family": "standard",
+      "attributes": { "color": "red" },
+      "due": "2025-11-03T14:00:00",
+      "route": [{ "capability": "paint", "duration_minutes": 25 }]
+    }
+  ],
+  "settings": { "time_limit_seconds": 30 }
+}

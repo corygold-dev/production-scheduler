@@ -41,6 +41,7 @@ function normalizeInput(input: Input) {
     family: p.family,
     due: parseIsoOffset(p.due, horizonStart),
     route: p.route,
+    attributes: p.attributes,
   }));
 
   return {
@@ -53,7 +54,8 @@ function normalizeInput(input: Input) {
 }
 
 function buildOperationsList(
-  products: NormalizedProduct[]
+  products: NormalizedProduct[],
+  frozenMinutes: number
 ): SchedulableOperation[] {
   const operations: SchedulableOperation[] = [];
 
@@ -67,7 +69,8 @@ function buildOperationsList(
         capability: op.capability,
         duration: op.duration_minutes,
         productDue: product.due,
-        earliestStart: 0,
+        earliestStart: frozenMinutes,
+        productAttributes: product.attributes,
       });
     }
   }
@@ -78,7 +81,9 @@ function buildOperationsList(
 function selectNextOperation(
   unscheduled: SchedulableOperation[],
   assignments: Map<string, InternalAssignment[]>,
-  productsMap: Map<string, NormalizedProduct>
+  productsMap: Map<string, NormalizedProduct>,
+  objective: "tardiness" | "changeovers",
+  resourceStates: Map<string, ResourceState>
 ): SchedulableOperation | null {
   const ready = unscheduled.filter((op) => {
     if (op.stepIndex === 0) return true;
@@ -92,26 +97,52 @@ function selectNextOperation(
 
   if (ready.length === 0) return null;
 
-  ready.sort((a, b) => {
-    // Priority: EDD, then slack (least remaining time), then shortest duration
-    if (a.productDue !== b.productDue) return a.productDue - b.productDue;
+  if (objective === "changeovers") {
+    ready.sort((a, b) => {
+      let aChangeoverPenalty = 0;
+      let bChangeoverPenalty = 0;
 
-    const productA = productsMap.get(a.productId)!;
-    const productB = productsMap.get(b.productId)!;
+      for (const [_, state] of resourceStates) {
+        if (state.lastFamily && state.lastFamily !== a.productFamily) {
+          aChangeoverPenalty++;
+        }
+        if (state.lastFamily && state.lastFamily !== b.productFamily) {
+          bChangeoverPenalty++;
+        }
+      }
 
-    const remainingA = productA.route
-      .slice(a.stepIndex)
-      .reduce((sum, op) => sum + op.duration_minutes, 0);
-    const remainingB = productB.route
-      .slice(b.stepIndex)
-      .reduce((sum, op) => sum + op.duration_minutes, 0);
+      if (aChangeoverPenalty !== bChangeoverPenalty) {
+        return aChangeoverPenalty - bChangeoverPenalty;
+      }
 
-    const slackA = a.productDue - a.earliestStart - remainingA;
-    const slackB = b.productDue - b.earliestStart - remainingB;
+      if (a.earliestStart !== b.earliestStart) {
+        return a.earliestStart - b.earliestStart;
+      }
 
-    if (slackA !== slackB) return slackA - slackB;
-    return a.duration - b.duration;
-  });
+      return a.duration - b.duration;
+    });
+  } else {
+    ready.sort((a, b) => {
+      // Priority: EDD, then slack (least remaining time), then shortest duration
+      if (a.productDue !== b.productDue) return a.productDue - b.productDue;
+
+      const productA = productsMap.get(a.productId)!;
+      const productB = productsMap.get(b.productId)!;
+
+      const remainingA = productA.route
+        .slice(a.stepIndex)
+        .reduce((sum, op) => sum + op.duration_minutes, 0);
+      const remainingB = productB.route
+        .slice(b.stepIndex)
+        .reduce((sum, op) => sum + op.duration_minutes, 0);
+
+      const slackA = a.productDue - a.earliestStart - remainingA;
+      const slackB = b.productDue - b.earliestStart - remainingB;
+
+      if (slackA !== slackB) return slackA - slackB;
+      return a.duration - b.duration;
+    });
+  }
 
   return ready[0];
 }
@@ -132,11 +163,32 @@ function getEligibleResources(
 function getChangeoverTime(
   lastFamily: string | null,
   nextFamily: string,
-  matrix: Record<string, number>
+  matrix: Record<string, number>,
+  lastAttributes?: Record<string, string>,
+  nextAttributes?: Record<string, string>
 ): number {
   if (!lastFamily) return 0;
-  const key = `${lastFamily}->${nextFamily}`;
-  return matrix[key] ?? 0;
+
+  if (lastAttributes && nextAttributes) {
+    const sortedAttrKeys = Object.keys(lastAttributes).sort();
+    let fromKey = lastFamily;
+    let toKey = nextFamily;
+
+    for (const key of sortedAttrKeys) {
+      if (lastAttributes[key] && nextAttributes[key]) {
+        fromKey += `:${lastAttributes[key]}`;
+        toKey += `:${nextAttributes[key]}`;
+      }
+    }
+
+    const attributeKey = `${fromKey}->${toKey}`;
+    if (matrix[attributeKey] !== undefined) {
+      return matrix[attributeKey];
+    }
+  }
+
+  const familyKey = `${lastFamily}->${nextFamily}`;
+  return matrix[familyKey] ?? 0;
 }
 
 function tryPlaceOperation(
@@ -178,10 +230,13 @@ function tryPlaceOperation(
         if (gapEnd <= gapStart) continue;
 
         const prevFamily = prevAssignment ? prevAssignment.productFamily : null;
+        const prevAttributes = prevAssignment?.productAttributes;
         const changeoverTime = getChangeoverTime(
           prevFamily,
           operation.productFamily,
-          changeoverMatrix
+          changeoverMatrix,
+          prevAttributes,
+          operation.productAttributes
         );
 
         const start = gapStart + changeoverTime;
@@ -340,7 +395,8 @@ function denormalizeResult(
 
 export function schedule(input: Input): ScheduleResult {
   const normalized = normalizeInput(input);
-  const operations = buildOperationsList(normalized.products);
+  const frozenMinutes = input.settings?.frozen_minutes ?? 0;
+  const operations = buildOperationsList(normalized.products, frozenMinutes);
   const productsMap = new Map(normalized.products.map((p) => [p.id, p]));
 
   if (normalized.products.length === 0) {
@@ -393,7 +449,13 @@ export function schedule(input: Input): ScheduleResult {
       };
     }
 
-    const nextOp = selectNextOperation(unscheduled, assignments, productsMap);
+    const nextOp = selectNextOperation(
+      unscheduled,
+      assignments,
+      productsMap,
+      input.settings?.minimize_changeovers ? "changeovers" : "tardiness",
+      resourceStates
+    );
 
     if (!nextOp) {
       return {
@@ -410,7 +472,7 @@ export function schedule(input: Input): ScheduleResult {
         (a) => a.stepIndex === nextOp.stepIndex - 1
       );
       if (priorStep) {
-        nextOp.earliestStart = priorStep.end;
+        nextOp.earliestStart = Math.max(nextOp.earliestStart, priorStep.end);
       }
     }
 
@@ -468,6 +530,7 @@ export function schedule(input: Input): ScheduleResult {
       resource: placement.resource,
       start: placement.start,
       end: placement.end,
+      productAttributes: nextOp.productAttributes,
     };
 
     if (!assignments.has(nextOp.productId)) {
@@ -516,11 +579,36 @@ export function schedule(input: Input): ScheduleResult {
     }
   }
 
-  return denormalizeResult(
+  const result = denormalizeResult(
     allAssignments,
     normalized.horizonStart,
     normalized.products,
     normalized.resources,
     normalized.changeoverMatrix
   );
+
+  if (input.settings?.minimize_changeovers && result.success) {
+    const altInput = {
+      ...input,
+      settings: {
+        ...input.settings,
+        minimize_changeovers: false,
+      },
+    };
+
+    const altResult = schedule(altInput);
+
+    if (altResult.success) {
+      return {
+        ...result,
+        alternate_schedule: {
+          objective: "minimize_tardiness",
+          assignments: altResult.assignments,
+          kpis: altResult.kpis,
+        },
+      };
+    }
+  }
+
+  return result;
 }

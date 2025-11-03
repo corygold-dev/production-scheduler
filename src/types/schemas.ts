@@ -25,6 +25,7 @@ export const productSchema = z.object({
   family: z.string().min(1),
   due: dateTimeString,
   route: z.array(operationSchema).min(1),
+  attributes: z.record(z.string(), z.string()).optional(),
 });
 
 export const changeoverMatrixSchema = z.object({
@@ -33,6 +34,8 @@ export const changeoverMatrixSchema = z.object({
 
 export const settingsSchema = z.object({
   time_limit_seconds: z.number().positive(),
+  frozen_minutes: z.number().min(0).optional(),
+  minimize_changeovers: z.boolean().optional(),
 });
 
 export const inputSchema = z.object({

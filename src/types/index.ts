@@ -41,6 +41,7 @@ export interface Product {
   family: string;
   due: string;
   route: Operation[];
+  attributes?: Record<string, string>;
 }
 
 export interface ChangeoverMatrix {
@@ -49,6 +50,8 @@ export interface ChangeoverMatrix {
 
 export interface Settings {
   time_limit_seconds: number;
+  frozen_minutes?: number;
+  minimize_changeovers?: boolean;
 }
 
 export interface Input {
@@ -83,6 +86,11 @@ export interface SuccessOutput {
   success: true;
   assignments: Assignment[];
   kpis: KPIs;
+  alternate_schedule?: {
+    objective: string;
+    assignments: Assignment[];
+    kpis: KPIs;
+  };
 }
 
 export interface FailureOutput {
@@ -112,6 +120,7 @@ export interface NormalizedProduct {
   family: string;
   due: number;
   route: Operation[];
+  attributes?: Record<string, string>;
 }
 
 export interface SchedulableOperation {
@@ -122,6 +131,7 @@ export interface SchedulableOperation {
   duration: number;
   productDue: number;
   earliestStart: number;
+  productAttributes?: Record<string, string>;
 }
 
 export interface InternalAssignment {
@@ -132,6 +142,7 @@ export interface InternalAssignment {
   resource: string;
   start: number;
   end: number;
+  productAttributes?: Record<string, string>;
 }
 
 export interface ResourceState {

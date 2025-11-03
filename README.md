@@ -29,6 +29,26 @@ curl -X POST http://localhost:3000/schedule \
 
 Returns detailed error when Label-1's calendar is too short to complete all operations.
 
+**Test multi-objective mode:**
+
+```bash
+curl -X POST http://localhost:3000/schedule \
+  -H "Content-Type: application/json" \
+  -d @multi-objective-input.json
+```
+
+Returns both schedules: primary optimized for min changeovers, alternate for min tardiness.
+
+**Test attribute-based changeovers:**
+
+```bash
+curl -X POST http://localhost:3000/schedule \
+  -H "Content-Type: application/json" \
+  -d @attribute-changeover-input.json
+```
+
+Demonstrates changeover times based on product attributes (e.g., paint colors) beyond just family.
+
 ## API
 
 **POST /schedule**
@@ -56,6 +76,75 @@ Returns assignments with start/end times, plus KPIs (tardiness, makespan, utiliz
 **GET /health**
 
 Returns service status and version.
+
+## Features
+
+### Frozen Zone
+
+Lock the first N minutes of the horizon to prevent scheduling in already-started work.
+
+```json
+{
+  "settings": {
+    "time_limit_seconds": 30,
+    "frozen_minutes": 120
+  }
+}
+```
+
+All operations will start at or after 120 minutes from the horizon start. Useful for re-scheduling scenarios where the first 2 hours are already in progress.
+
+### Multi-Objective Mode
+
+Get two schedules optimized for different objectives in a single request.
+
+```json
+{
+  "settings": {
+    "minimize_changeovers": true
+  }
+}
+```
+
+Returns:
+
+- **Primary schedule** (in `assignments`): Minimizes changeover count
+- **Alternate schedule** (in `alternate_schedule`): Minimizes total tardiness
+
+Compare the two schedules to see the tradeoff between minimizing setups vs meeting due dates.
+
+### Attribute-Based Changeovers
+
+Define changeover times based on product attributes beyond just family.
+
+```json
+{
+  "products": [
+    {
+      "id": "P-1",
+      "family": "standard",
+      "attributes": { "color": "red", "size": "large" },
+      "due": "...",
+      "route": [...]
+    },
+    {
+      "id": "P-2",
+      "family": "premium",
+      "attributes": { "color": "blue", "size": "small" },
+      "due": "...",
+      "route": [...]
+    }
+  ],
+  "changeover_matrix_minutes": {
+    "values": {
+      "standard->premium": 20,
+      "standard:red->premium:blue": 40
+    }
+  }
+}
+```
+
+The scheduler first looks for `"family:attr1:attr2->family:attr1:attr2"` keys, then falls back to `"family->family"` if no attribute-specific rule exists. Attributes are sorted alphabetically when building keys.
 
 ## Approach
 
@@ -135,16 +224,19 @@ Input is validated with Zod schemas before reaching the scheduler. All internal 
 
 - Try critical ratio priority (remaining_slack / remaining_work) instead of pure EDD
 - For bottleneck resources, schedule those first and fit other work around them
+- Add local search refinement (2-opt swaps) to improve initial SGS solutions
 
-**Features:**
+**Additional features:**
 
-- Frozen zone: lock first N hours, only schedule future work
-- Multi-objective mode: return multiple schedules (min tardiness vs min changeovers vs max utilization)
+- Resource pools: Allow operations to use any resource from a pool
+- Preemption: Allow interrupting operations for higher-priority work
+- Multi-attribute changeover cascading: Support fallback chains like `color->family->default`
 
 **Operationalization:**
 
 - Add a job queue (BullMQ or similar) so scheduling runs can happen asynchronously
 - Schedule comparison endpoint (show diff between two runs)
+- Persistent storage for schedule history
 
 **Testing:**
 
@@ -153,7 +245,7 @@ Input is validated with Zod schemas before reaching the scheduler. All internal 
 
 **Code quality:**
 
-- Split scheduler.ts into smaller modules (currently 520 lines)
+- Split scheduler.ts into smaller modules (currently 590 lines)
 
 ## Build & Deploy
 

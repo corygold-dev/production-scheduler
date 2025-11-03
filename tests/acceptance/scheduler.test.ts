@@ -623,5 +623,114 @@ describe("Scheduler Acceptance Tests", () => {
 
       expect(result).toMatchSnapshot();
     });
+
+    it("respects frozen zone when specified", () => {
+      const frozenInput = {
+        ...sampleInput,
+        settings: {
+          time_limit_seconds: 30,
+          frozen_minutes: 120,
+        },
+      };
+
+      const result = schedule(frozenInput);
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      for (const assignment of result.assignments) {
+        const startTime = parseISO(assignment.start);
+        const horizonStart = parseISO(sampleInput.horizon.start);
+        const minutesFromStart = Math.floor(
+          (startTime.getTime() - horizonStart.getTime()) / 60000
+        );
+
+        expect(minutesFromStart).toBeGreaterThanOrEqual(120);
+      }
+
+      expect(result.assignments.length).toBeGreaterThan(0);
+      expect(result.kpis.tardiness_minutes).toBeGreaterThanOrEqual(0);
+    });
+
+    it("returns both schedules when minimize_changeovers is true", () => {
+      const multiObjectiveInput = {
+        ...sampleInput,
+        settings: {
+          time_limit_seconds: 30,
+          minimize_changeovers: true,
+        },
+      };
+
+      const result = schedule(multiObjectiveInput);
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      expect(result.alternate_schedule).toBeDefined();
+      expect(result.alternate_schedule?.objective).toBe("minimize_tardiness");
+      expect(result.alternate_schedule?.assignments.length).toBeGreaterThan(0);
+      expect(result.alternate_schedule?.kpis).toBeDefined();
+
+      expect(result.kpis.changeovers).toBeLessThanOrEqual(
+        result.alternate_schedule?.kpis.changeovers || Infinity
+      );
+    });
+
+    it("respects attribute-based changeover matrix", () => {
+      const attributeInput = {
+        horizon: { start: "2025-11-03T08:00:00", end: "2025-11-03T16:00:00" },
+        resources: [
+          {
+            id: "Machine-1",
+            capabilities: ["process"],
+            calendar: [
+              ["2025-11-03T08:00", "2025-11-03T16:00"] as [string, string],
+            ],
+          },
+        ],
+        changeover_matrix_minutes: {
+          values: {
+            "standard->standard": 0,
+            "standard->premium": 20,
+            "standard:red->premium:blue": 40,
+          },
+        },
+        products: [
+          {
+            id: "P-1",
+            family: "standard",
+            attributes: { color: "red" },
+            due: "2025-11-03T10:00:00",
+            route: [{ capability: "process", duration_minutes: 30 }],
+          },
+          {
+            id: "P-2",
+            family: "premium",
+            attributes: { color: "blue" },
+            due: "2025-11-03T11:00:00",
+            route: [{ capability: "process", duration_minutes: 30 }],
+          },
+        ],
+        settings: { time_limit_seconds: 30 },
+      };
+
+      const result = schedule(attributeInput);
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      const p1End = parseISO(
+        result.assignments.find((a) => a.product === "P-1")!.end
+      );
+      const p2Start = parseISO(
+        result.assignments.find((a) => a.product === "P-2")!.start
+      );
+
+      const changeoverMinutes = Math.floor(
+        (p2Start.getTime() - p1End.getTime()) / 60000
+      );
+
+      expect(changeoverMinutes).toBe(40);
+    });
   });
 });
