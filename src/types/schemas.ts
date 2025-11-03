@@ -37,7 +37,7 @@ export const inputSchema = z.object({
   horizon: horizonSchema,
   resources: z.array(resourceSchema).min(1),
   changeover_matrix_minutes: changeoverMatrixSchema,
-  products: z.array(productSchema).min(1),
+  products: z.array(productSchema),
   settings: settingsSchema,
 });
 
@@ -79,3 +79,6 @@ export const scheduleResultSchema = z.discriminatedUnion("success", [
 
 export type Input = z.infer<typeof inputSchema>;
 export type ScheduleResult = z.infer<typeof scheduleResultSchema>;
+
+export const InputSchema = inputSchema;
+export const ScheduleResultSchema = scheduleResultSchema;
