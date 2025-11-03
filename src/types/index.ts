@@ -14,7 +14,7 @@
 // Base Types
 
 export interface Interval {
-  start: number; // minutes from horizon start
+  start: number;
   end: number;
 }
 
@@ -44,7 +44,7 @@ export interface Product {
 }
 
 export interface ChangeoverMatrix {
-  values: Record<string, number>; // e.g., "standard->premium": 20
+  values: Record<string, number>;
 }
 
 export interface Settings {
@@ -110,7 +110,7 @@ export interface NormalizedResource {
 export interface NormalizedProduct {
   id: string;
   family: string;
-  due: number; // minutes from horizon start
+  due: number;
   route: Operation[];
 }
 
@@ -119,9 +119,9 @@ export interface SchedulableOperation {
   productFamily: string;
   stepIndex: number;
   capability: string;
-  duration: number; // minutes
-  productDue: number; // minutes from horizon start
-  earliestStart: number; // minutes from horizon start (due to precedence)
+  duration: number;
+  productDue: number;
+  earliestStart: number;
 }
 
 export interface InternalAssignment {
@@ -129,7 +129,8 @@ export interface InternalAssignment {
   productFamily: string;
   stepIndex: number;
   operationName: string;
-  start: number; // minutes from horizon start
+  resource: string;
+  start: number;
   end: number;
 }
 

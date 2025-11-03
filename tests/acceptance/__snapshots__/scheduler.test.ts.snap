@@ -1,0 +1,100 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Scheduler Acceptance Tests > Quality Assurance > matches snapshot for sample input structure 1`] = `
+{
+  "assignments": [
+    {
+      "end": "2025-11-03T08:30:00.000Z",
+      "operation": "fill",
+      "product": "P-100",
+      "resource": "Fill-1",
+      "start": "2025-11-03T08:00:00.000Z",
+    },
+    {
+      "end": "2025-11-03T08:25:00.000Z",
+      "operation": "fill",
+      "product": "P-102",
+      "resource": "Fill-2",
+      "start": "2025-11-03T08:00:00.000Z",
+    },
+    {
+      "end": "2025-11-03T08:50:00.000Z",
+      "operation": "label",
+      "product": "P-100",
+      "resource": "Label-1",
+      "start": "2025-11-03T08:30:00.000Z",
+    },
+    {
+      "end": "2025-11-03T09:15:00.000Z",
+      "operation": "fill",
+      "product": "P-103",
+      "resource": "Fill-2",
+      "start": "2025-11-03T08:45:00.000Z",
+    },
+    {
+      "end": "2025-11-03T09:05:00.000Z",
+      "operation": "pack",
+      "product": "P-100",
+      "resource": "Pack-1",
+      "start": "2025-11-03T08:50:00.000Z",
+    },
+    {
+      "end": "2025-11-03T09:10:00.000Z",
+      "operation": "label",
+      "product": "P-102",
+      "resource": "Label-1",
+      "start": "2025-11-03T08:50:00.000Z",
+    },
+    {
+      "end": "2025-11-03T09:25:00.000Z",
+      "operation": "fill",
+      "product": "P-101",
+      "resource": "Fill-1",
+      "start": "2025-11-03T08:50:00.000Z",
+    },
+    {
+      "end": "2025-11-03T09:55:00.000Z",
+      "operation": "label",
+      "product": "P-103",
+      "resource": "Label-1",
+      "start": "2025-11-03T09:35:00.000Z",
+    },
+    {
+      "end": "2025-11-03T10:20:00.000Z",
+      "operation": "label",
+      "product": "P-101",
+      "resource": "Label-1",
+      "start": "2025-11-03T09:55:00.000Z",
+    },
+    {
+      "end": "2025-11-03T10:30:00.000Z",
+      "operation": "pack",
+      "product": "P-103",
+      "resource": "Pack-1",
+      "start": "2025-11-03T10:15:00.000Z",
+    },
+    {
+      "end": "2025-11-03T10:45:00.000Z",
+      "operation": "pack",
+      "product": "P-101",
+      "resource": "Pack-1",
+      "start": "2025-11-03T10:30:00.000Z",
+    },
+  ],
+  "kpis": {
+    "changeovers": 4,
+    "makespan_minutes": 165,
+    "on_time_jobs": 4,
+    "tardiness_minutes": 0,
+    "total_jobs": 4,
+    "utilization": {
+      "Fill-1": 19,
+      "Fill-2": 16,
+      "Label-1": 22,
+      "Pack-1": 14,
+    },
+  },
+  "success": true,
+  "version": "1.0.0",
+}
+`;
