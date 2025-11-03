@@ -19,6 +19,16 @@ curl -X POST http://localhost:3000/schedule \
 
 The server runs on port 3000 by default (configurable via `PORT` env var).
 
+**Test infeasible case:**
+
+```bash
+curl -X POST http://localhost:3000/schedule \
+  -H "Content-Type: application/json" \
+  -d @infeasible-input.json
+```
+
+Returns detailed error when Label-1's calendar is too short to complete all operations.
+
 ## API
 
 **POST /schedule**
