@@ -1,0 +1,36 @@
+{
+  "name": "production-scheduler",
+  "version": "1.0.0",
+  "description": "Minimal Constraint-Based Production Scheduler (Harmony Take-Home)",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/api/server.ts",
+    "build": "tsc",
+    "start": "node dist/api/server.js",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "scheduling",
+    "optimization",
+    "typescript",
+    "fastify"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fastify": "^4.28.1",
+    "@fastify/sensible": "^5.6.0",
+    "zod": "^3.23.8",
+    "date-fns": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "typescript": "^5.5.3",
+    "vitest": "^1.6.0",
+    "tsx": "^4.16.2"
+  }
+}
