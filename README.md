@@ -49,21 +49,27 @@ Returns service status and version.
 
 ## Approach
 
-This uses a Serial Schedule Generation Scheme (SGS) heuristic rather than a full constraint solver. The algorithm:
+This uses a Serial Schedule Generation Scheme (SGS) heuristic rather than a full constraint solver.
 
-1. Normalizes all times to minutes from horizon start for simpler arithmetic
-2. Flattens product routes into a pool of schedulable operations
-3. Iteratively picks the most urgent operation (Earliest Due Date + slack tie-breaker)
-4. Places it on the best available resource considering:
-   - Eligibility (capability match)
-   - Calendar windows (must fit in one contiguous window)
-   - Existing assignments (finds gaps in the schedule)
-   - Changeover time (based on preceding operation's product family)
-5. Updates state and repeats until done or infeasible
+**The main scheduling loop:**
+
+1. Pick the most urgent ready operation (EDD priority + slack tie-breaker)
+2. Find the best available resource and time slot
+3. Record the assignment
+4. Update resource state and mark dependent operations as ready
+5. Repeat until all operations scheduled or infeasible
+
+Each placement considers eligibility, calendar windows, existing assignments, and changeover requirements.
+
+**How it works in detail:**
+
+- Normalizes all times to minutes from horizon start for simpler arithmetic
+- Flattens product routes into a pool of schedulable operations
+- Operations become "ready" when their previous step completes (enforces precedence)
+- Resource selection minimizes projected tardiness, with earliest completion as tie-breaker
+- Changeover time is calculated based on the preceding operation's product family in each specific gap
 
 Priority rule: EDD (earliest due date) first, then remaining work (slack), then shortest duration.
-
-Resource selection: Choose the resource that minimizes projected tardiness, with earliest completion as tie-breaker.
 
 ### Why a heuristic instead of CP-SAT or MIP?
 

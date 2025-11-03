@@ -93,6 +93,7 @@ function selectNextOperation(
   if (ready.length === 0) return null;
 
   ready.sort((a, b) => {
+    // Priority: EDD, then slack (least remaining time), then shortest duration
     if (a.productDue !== b.productDue) return a.productDue - b.productDue;
 
     const productA = productsMap.get(a.productId)!;
@@ -156,24 +157,27 @@ function tryPlaceOperation(
 
   for (const resource of eligibleResources) {
     const state = resourceStates.get(resource.id)!;
-    const sorted = state.assignments.slice().sort((a, b) => a.start - b.start);
+    const sorted = state.assignments;
 
     for (const window of resource.calendar) {
       if (window.end <= operation.earliestStart) continue;
-
+      // Check each gap between scheduled jobs (including before first and after last)
       for (let i = 0; i <= sorted.length; i++) {
-        const prev = sorted[i - 1];
-        const next = sorted[i];
+        const prevAssignment = sorted[i - 1];
+        const nextAssignment = sorted[i];
 
         const gapStart = Math.max(
           operation.earliestStart,
-          prev ? prev.end : window.start
+          prevAssignment ? prevAssignment.end : window.start
         );
-        const gapEnd = Math.min(window.end, next ? next.start : window.end);
+        const gapEnd = Math.min(
+          window.end,
+          nextAssignment ? nextAssignment.start : window.end
+        );
 
         if (gapEnd <= gapStart) continue;
 
-        const prevFamily = prev ? prev.productFamily : null;
+        const prevFamily = prevAssignment ? prevAssignment.productFamily : null;
         const changeoverTime = getChangeoverTime(
           prevFamily,
           operation.productFamily,
@@ -385,7 +389,7 @@ export function schedule(input: Input): ScheduleResult {
         version: SCHEDULER_VERSION,
         success: false,
         error: "Scheduler stuck in infinite loop",
-        why: ["Maximum iterations exceeded - possible precedence cycle"],
+        why: ["Maximum iterations exceeded"],
       };
     }
 
