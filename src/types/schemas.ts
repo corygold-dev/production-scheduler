@@ -43,7 +43,7 @@ export const inputSchema = z.object({
 
 export const assignmentSchema = z.object({
   product: z.string(),
-  operation: z.string(),
+  op: z.string(),
   resource: z.string(),
   start: z.string().datetime(),
   end: z.string().datetime(),

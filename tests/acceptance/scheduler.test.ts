@@ -131,7 +131,7 @@ describe("Scheduler Acceptance Tests", () => {
 
       const byResource = new Map<
         string,
-        Array<{ start: Date; end: Date; product: string; operation: string }>
+        Array<{ start: Date; end: Date; product: string; op: string }>
       >();
 
       for (const assignment of result.assignments) {
@@ -142,7 +142,7 @@ describe("Scheduler Acceptance Tests", () => {
           start: parseISO(assignment.start),
           end: parseISO(assignment.end),
           product: assignment.product,
-          operation: assignment.operation,
+          op: assignment.op,
         });
       }
 
@@ -162,11 +162,11 @@ describe("Scheduler Acceptance Tests", () => {
           if (curr.start.getTime() < prev.end.getTime()) {
             throw new Error(
               `Overlap detected on ${resourceId}: ${prev.product}.${
-                prev.operation
+                prev.op
               } (${prev.start.toISOString()}-${prev.end.toISOString()}) overlaps with ${
                 curr.product
               }.${
-                curr.operation
+                curr.op
               } (${curr.start.toISOString()}-${curr.end.toISOString()})`
             );
           }
@@ -185,10 +185,10 @@ describe("Scheduler Acceptance Tests", () => {
           .filter((a) => a.product === product.id)
           .sort((a, b) => {
             const aStep = product.route.findIndex(
-              (op) => op.capability === a.operation
+              (op) => op.capability === a.op
             );
             const bStep = product.route.findIndex(
-              (op) => op.capability === b.operation
+              (op) => op.capability === b.op
             );
             return aStep - bStep;
           });
@@ -205,10 +205,10 @@ describe("Scheduler Acceptance Tests", () => {
           if (currStart.getTime() < prevEnd.getTime()) {
             throw new Error(
               `Precedence violation for ${product.id}: step ${i - 1} (${
-                prev.operation
-              }) ends at ${prev.end}, but step ${i} (${
-                curr.operation
-              }) starts at ${curr.start}`
+                prev.op
+              }) ends at ${prev.end}, but step ${i} (${curr.op}) starts at ${
+                curr.start
+              }`
             );
           }
         }
@@ -249,7 +249,7 @@ describe("Scheduler Acceptance Tests", () => {
           (p) => p.id === assignment.product
         )!;
         const operation = product.route.find(
-          (op) => op.capability === assignment.operation
+          (op) => op.capability === assignment.op
         )!;
 
         const resourceCapabilities = capabilityMap.get(assignment.resource)!;
@@ -289,7 +289,7 @@ describe("Scheduler Acceptance Tests", () => {
 
         if (!fitsInSomeWindow) {
           throw new Error(
-            `Assignment ${assignment.product}.${assignment.operation} on ${assignment.resource} (${assignment.start} - ${assignment.end}) does not fit in any calendar window`
+            `Assignment ${assignment.product}.${assignment.op} on ${assignment.resource} (${assignment.start} - ${assignment.end}) does not fit in any calendar window`
           );
         }
       }

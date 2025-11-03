@@ -259,7 +259,7 @@ function denormalizeResult(
 
   const outputAssignments = sortedAssignments.map((a) => ({
     product: a.productId,
-    operation: a.operationName,
+    op: a.operationName,
     resource: a.resource,
     start: formatIsoOffset(a.start, horizonStart),
     end: formatIsoOffset(a.end, horizonStart),

@@ -63,7 +63,7 @@ export interface Input {
 
 export interface Assignment {
   product: string;
-  operation: string;
+  op: string;
   resource: string;
   start: string;
   end: string;
