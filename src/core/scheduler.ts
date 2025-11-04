@@ -209,7 +209,7 @@ function tryPlaceOperation(
 
   for (const resource of eligibleResources) {
     const state = resourceStates.get(resource.id)!;
-    const sorted = state.assignments;
+    const sorted = state.assignments; // kept sorted by updateResourceState
 
     for (const window of resource.calendar) {
       if (window.end <= operation.earliestStart) continue;
@@ -289,12 +289,16 @@ function computeChangeoverMinutesPerResource(
     const sorted = list.slice().sort((a, b) => a.start - b.start);
     let total = 0;
     for (let i = 1; i < sorted.length; i++) {
-      if (sorted[i - 1].productFamily !== sorted[i].productFamily) {
-        const key = `${sorted[i - 1].productFamily}->${
-          sorted[i].productFamily
-        }`;
-        total += matrix[key] ?? 0;
-      }
+      const prev = sorted[i - 1];
+      const curr = sorted[i];
+      const setup = getChangeoverTime(
+        prev.productFamily,
+        curr.productFamily,
+        matrix,
+        prev.productAttributes,
+        curr.productAttributes
+      );
+      total += setup;
     }
     result[rid] = total;
   }
@@ -367,9 +371,16 @@ function denormalizeResult(
   for (const [, list] of resourceMap.entries()) {
     const sorted = list.slice().sort((a, b) => a.start - b.start);
     for (let i = 1; i < sorted.length; i++) {
-      if (sorted[i - 1].productFamily !== sorted[i].productFamily) {
-        changeovers++;
-      }
+      const prev = sorted[i - 1];
+      const curr = sorted[i];
+      const setup = getChangeoverTime(
+        prev.productFamily,
+        curr.productFamily,
+        changeoverMatrix,
+        prev.productAttributes,
+        curr.productAttributes
+      );
+      if (setup > 0) changeovers++;
     }
   }
 
