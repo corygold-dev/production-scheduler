@@ -1,6 +1,6 @@
 # Production Scheduler
 
-A constraint-based production scheduler that builds feasible schedules minimizing total tardiness. Originally a take-home project, the goal was to make something realistic, fast, and easy to reason about. Built with TypeScript and Fastify.
+A fast, constraint-aware job-shop scheduler that assigns operations to resources with respect to calendars, precedence, and changeovers — designed for transparency and explainability.
 
 ## Quick Start
 
@@ -54,6 +54,10 @@ Demonstrates changeover times based on product attributes (e.g., paint colors) b
 **POST /schedule**
 
 Accepts a scheduling problem and returns either a valid schedule or detailed infeasibility reasons.
+
+Returns assignments with start/end times, plus KPIs (tardiness, makespan, utilization, changeovers). Each assignment includes product ID, operation name, resource, and ISO timestamps for start/end.
+
+If `settings.minimize_changeovers` is true, the response also includes an `alternate_schedule` section optimized for total tardiness.
 
 Example request (abbreviated):
 
