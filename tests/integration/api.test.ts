@@ -178,6 +178,49 @@ describe("API Integration Tests", () => {
       expect(result.assignments.length).toBe(0);
       expect(result.kpis.total_jobs).toBe(0);
     });
+
+    it("rejects overlapping operations on the same resource", async () => {
+      const overlappingInput: Input = {
+        ...sampleInput,
+        resources: [
+          {
+            id: "Fill-Only",
+            capabilities: ["fill"],
+            calendar: [["2025-11-03T08:00:00Z", "2025-11-03T09:00:00Z"]],
+          },
+        ],
+        products: [
+          {
+            id: "P-Overlap-1",
+            family: "standard",
+            due: "2025-11-03T08:30:00Z",
+            route: [{ capability: "fill", duration_minutes: 45 }],
+          },
+          {
+            id: "P-Overlap-2",
+            family: "premium",
+            due: "2025-11-03T08:45:00Z",
+            route: [{ capability: "fill", duration_minutes: 30 }],
+          },
+        ],
+      };
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/schedule",
+        payload: overlappingInput,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const result = response.json();
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+      expect(result.why).toBeDefined();
+      expect(
+        result.why.some((r: string) => r.includes("No available time slot"))
+      ).toBe(true);
+    });
   });
 
   describe("GET /health", () => {
