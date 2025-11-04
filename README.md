@@ -14,7 +14,7 @@ npm run dev
 # Make a request
 curl -X POST http://localhost:3000/schedule \
   -H "Content-Type: application/json" \
-  -d @sample-input.json
+  -d @examples/sample-input.json
 ```
 
 The server runs on port 3000 by default (configurable via `PORT` env var).
@@ -24,7 +24,7 @@ The server runs on port 3000 by default (configurable via `PORT` env var).
 ```bash
 curl -X POST http://localhost:3000/schedule \
   -H "Content-Type: application/json" \
-  -d @infeasible-input.json
+  -d @examples/infeasible-input.json
 ```
 
 Returns detailed error when Label-1's calendar is too short to complete all operations.
@@ -34,7 +34,7 @@ Returns detailed error when Label-1's calendar is too short to complete all oper
 ```bash
 curl -X POST http://localhost:3000/schedule \
   -H "Content-Type: application/json" \
-  -d @multi-objective-input.json
+  -d @examples/multi-objective-input.json
 ```
 
 Returns both schedules: primary optimized for min changeovers, alternate for min tardiness.
@@ -44,7 +44,7 @@ Returns both schedules: primary optimized for min changeovers, alternate for min
 ```bash
 curl -X POST http://localhost:3000/schedule \
   -H "Content-Type: application/json" \
-  -d @attribute-changeover-input.json
+  -d @examples/attribute-changeover-input.json
 ```
 
 Demonstrates changeover times based on product attributes (e.g., paint colors) beyond just family.
