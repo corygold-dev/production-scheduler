@@ -190,3 +190,22 @@ describe("findEarliestAvailableSlot", () => {
     expect(slot).toBeNull();
   });
 });
+
+describe("Integration checks", () => {
+  it("ensures parsed calendar aligns with findEarliestAvailableSlot", () => {
+    const horizonStart = "2025-11-03T08:00:00Z";
+    const calendar: [string, string][] = [
+      ["2025-11-03T08:00:00Z", "2025-11-03T09:00:00Z"],
+      ["2025-11-03T09:30:00Z", "2025-11-03T10:00:00Z"],
+    ];
+    const parsed = parseCalendarWindows(calendar, horizonStart);
+    const slot = findEarliestAvailableSlot(parsed, [], 15, 60);
+    expect(slot).toBe(90);
+  });
+
+  it("returns same slot with or without occupied merge optimization", () => {
+    const calendar = [{ start: 0, end: 100 }];
+    const slot = findEarliestAvailableSlot(calendar, [], 20, 0);
+    expect(slot).toBe(0);
+  });
+});
