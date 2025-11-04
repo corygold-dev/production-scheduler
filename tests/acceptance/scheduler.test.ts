@@ -678,13 +678,16 @@ describe("Scheduler Acceptance Tests", () => {
 
     it("respects attribute-based changeover matrix", () => {
       const attributeInput = {
-        horizon: { start: "2025-11-03T08:00:00", end: "2025-11-03T16:00:00" },
+        horizon: { start: "2025-11-03T08:00:00Z", end: "2025-11-03T16:00:00Z" },
         resources: [
           {
             id: "Machine-1",
             capabilities: ["process"],
             calendar: [
-              ["2025-11-03T08:00", "2025-11-03T16:00"] as [string, string],
+              ["2025-11-03T08:00:00Z", "2025-11-03T16:00:00Z"] as [
+                string,
+                string
+              ],
             ],
           },
         ],
@@ -700,14 +703,14 @@ describe("Scheduler Acceptance Tests", () => {
             id: "P-1",
             family: "standard",
             attributes: { color: "red" },
-            due: "2025-11-03T10:00:00",
+            due: "2025-11-03T10:00:00Z",
             route: [{ capability: "process", duration_minutes: 30 }],
           },
           {
             id: "P-2",
             family: "premium",
             attributes: { color: "blue" },
-            due: "2025-11-03T11:00:00",
+            due: "2025-11-03T11:00:00Z",
             route: [{ capability: "process", duration_minutes: 30 }],
           },
         ],
