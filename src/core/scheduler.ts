@@ -29,6 +29,10 @@ function normalizeInput(input: Input) {
       }))
       .filter((w) => w.end > w.start);
 
+    if (merged.length === 0) {
+      throw new Error(`Resource ${r.id} has no available time within horizon`);
+    }
+
     resources.set(r.id, {
       id: r.id,
       capabilities: new Set(r.capabilities),
@@ -404,6 +408,14 @@ function denormalizeResult(
   };
 }
 
+/**
+ * Heuristic job-shop style scheduler:
+ * - Builds feasible, non-overlapping schedule within resource calendars & horizon
+ * - Respects operation precedence and capability eligibility
+ * - Supports family and attribute-based changeovers
+ * - Objective: minimize total tardiness (optionally minimize changeovers)
+ * - Returns KPIs: tardiness, changeovers, makespan, utilization, on-time jobs
+ */
 export function schedule(input: Input): ScheduleResult {
   const normalized = normalizeInput(input);
   const frozenMinutes = input.settings?.frozen_minutes ?? 0;
