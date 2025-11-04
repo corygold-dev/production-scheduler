@@ -218,43 +218,8 @@ Input is validated with Zod schemas before reaching the scheduler. All internal 
 
 **Empty products**: Valid input, returns success with empty assignments and zeroed KPIs.
 
-## If This Were Production
+## What I'd Do Next
 
-**Algorithm improvements:**
-
-- Try critical ratio priority (remaining_slack / remaining_work) instead of pure EDD
-- For bottleneck resources, schedule those first and fit other work around them
-- Add local search refinement (2-opt swaps) to improve initial SGS solutions
-
-**Additional features:**
-
-- Resource pools: Allow operations to use any resource from a pool
-- Preemption: Allow interrupting operations for higher-priority work
-- Multi-attribute changeover cascading: Support fallback chains like `color->family->default`
-
-**Operationalization:**
-
-- Add a job queue (BullMQ or similar) so scheduling runs can happen asynchronously
-- Schedule comparison endpoint (show diff between two runs)
-- Persistent storage for schedule history
-
-**Testing:**
-
-- Load tests (1000 products to find scaling limits)
-- Fuzz testing for malformed inputs and edge cases
-
-**Code quality:**
-
-- Split scheduler.ts into smaller modules (currently 590 lines)
-
-## Build & Deploy
-
-```bash
-# Build for production
-npm run build
-
-# Run compiled version
-npm start
-```
-
-Output goes to `dist/`. The service is stateless and safe to run multiple replicas behind a load balancer.
+1. **Schedule comparison** - An endpoint that takes two schedule outputs and shows the differences in assignments and KPIs
+2. **Validation endpoint** - POST a schedule result to verify it meets all constraints (useful for testing alternative algorithms)
+3. **Load testing** - Generate large random inputs to find where performance degrades and optimize bottlenecks
